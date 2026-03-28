@@ -1,5 +1,5 @@
 [project]
-name = "arch-review"
+name = "infracheck"
 version = "0.1.0"
 description = "Analyze software architecture for fault tolerance, scalability, security, and observability issues"
 readme = "README.md"
