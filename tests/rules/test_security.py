@@ -126,7 +126,9 @@ class TestSecurityGroupOpenIngress:
             "aws_security_group": [
                 {
                     "_name": "my_sg",
-                    "ingress": [{"from_port": 11211, "to_port": 11211, "cidr_blocks": ["0.0.0.0/0"]}],
+                    "ingress": [
+                        {"from_port": 11211, "to_port": 11211, "cidr_blocks": ["0.0.0.0/0"]}
+                    ],
                 }
             ]
         }
