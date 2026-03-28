@@ -72,3 +72,83 @@ def check_rds_backup_retention(resources: dict[str, list[dict]]) -> list[RuleRes
         )
 
     return results
+
+
+def check_lambda_dlq(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """Lambda functions should have a dead-letter queue configured for failed async invocations."""
+    results = []
+
+    for function in resources.get("aws_lambda_function", []):
+        dead_letter_config = function.get("dead_letter_config", {})
+        # dead_letter_config may be a list due to hcl2 block parsing
+        if isinstance(dead_letter_config, list):
+            dead_letter_config = dead_letter_config[0] if dead_letter_config else {}
+        has_dlq = bool(dead_letter_config.get("target_arn"))
+
+        results.append(
+            RuleResult(
+                rule_id="lambda_dlq_configured",
+                category=CATEGORY,
+                severity="medium",
+                passed=has_dlq,
+                message="Lambda function has a dead-letter queue configured"
+                if has_dlq
+                else "Lambda function has no dead-letter queue — failed async invocations"
+                " will be silently dropped",
+                resource=function["_name"],
+            )
+        )
+
+    return results
+
+
+def check_dynamodb_pitr(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """DynamoDB tables should have point-in-time recovery enabled."""
+    results = []
+
+    for table in resources.get("aws_dynamodb_table", []):
+        pitr = table.get("point_in_time_recovery", {})
+        # point_in_time_recovery may be a list due to hcl2 block parsing
+        if isinstance(pitr, list):
+            pitr = pitr[0] if pitr else {}
+        has_pitr = pitr.get("enabled", False)
+
+        results.append(
+            RuleResult(
+                rule_id="dynamodb_pitr_enabled",
+                category=CATEGORY,
+                severity="medium",
+                passed=has_pitr,
+                message="DynamoDB table has point-in-time recovery enabled"
+                if has_pitr
+                else "DynamoDB table does not have point-in-time recovery enabled"
+                " — data loss window is up to 24 hours",
+                resource=table["_name"],
+            )
+        )
+
+    return results
+
+
+def check_rds_deletion_protection(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """RDS instances should have deletion protection enabled to prevent accidental data loss."""
+    results = []
+
+    for instance in resources.get("aws_db_instance", []):
+        has_deletion_protection = instance.get("deletion_protection", False)
+
+        results.append(
+            RuleResult(
+                rule_id="rds_deletion_protection",
+                category=CATEGORY,
+                severity="medium",
+                passed=has_deletion_protection,
+                message="RDS instance has deletion protection enabled"
+                if has_deletion_protection
+                else "RDS instance does not have deletion protection enabled"
+                " — it can be deleted accidentally",
+                resource=instance["_name"],
+            )
+        )
+
+    return results
