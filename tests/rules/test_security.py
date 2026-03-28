@@ -1,4 +1,6 @@
 from infracheck.rules.security import (
+    check_ec2_imdsv2_required,
+    check_ec2_no_public_ip,
     check_rds_not_publicly_accessible,
     check_s3_public_access,
     check_security_group_open_ingress,
@@ -149,4 +151,57 @@ class TestSecurityGroupOpenIngress:
 
     def test_returns_empty_when_no_security_groups(self):
         results = check_security_group_open_ingress({})
+        assert results == []
+
+
+class TestEc2Imdsv2Required:
+    def test_passes_when_imdsv2_required(self):
+        resources = {
+            "aws_instance": [{"_name": "my_ec2", "metadata_options": {"http_tokens": "required"}}]
+        }
+        results = check_ec2_imdsv2_required(resources)
+        assert results[0].passed is True
+
+    def test_passes_when_metadata_options_is_list(self):
+        resources = {
+            "aws_instance": [{"_name": "my_ec2", "metadata_options": [{"http_tokens": "required"}]}]
+        }
+        results = check_ec2_imdsv2_required(resources)
+        assert results[0].passed is True
+
+    def test_fails_when_http_tokens_is_optional(self):
+        resources = {
+            "aws_instance": [{"_name": "my_ec2", "metadata_options": {"http_tokens": "optional"}}]
+        }
+        results = check_ec2_imdsv2_required(resources)
+        assert results[0].passed is False
+
+    def test_fails_when_metadata_options_not_set(self):
+        resources = {"aws_instance": [{"_name": "my_ec2"}]}
+        results = check_ec2_imdsv2_required(resources)
+        assert results[0].passed is False
+
+    def test_returns_empty_when_no_instances(self):
+        results = check_ec2_imdsv2_required({})
+        assert results == []
+
+
+class TestEc2NoPublicIp:
+    def test_passes_when_public_ip_not_set(self):
+        resources = {"aws_instance": [{"_name": "my_ec2"}]}
+        results = check_ec2_no_public_ip(resources)
+        assert results[0].passed is True
+
+    def test_passes_when_public_ip_disabled(self):
+        resources = {"aws_instance": [{"_name": "my_ec2", "associate_public_ip_address": False}]}
+        results = check_ec2_no_public_ip(resources)
+        assert results[0].passed is True
+
+    def test_fails_when_public_ip_enabled(self):
+        resources = {"aws_instance": [{"_name": "my_ec2", "associate_public_ip_address": True}]}
+        results = check_ec2_no_public_ip(resources)
+        assert results[0].passed is False
+
+    def test_returns_empty_when_no_instances(self):
+        results = check_ec2_no_public_ip({})
         assert results == []

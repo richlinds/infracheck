@@ -85,3 +85,56 @@ def check_security_group_open_ingress(resources: dict[str, list[dict]]) -> list[
         )
 
     return results
+
+
+def check_ec2_imdsv2_required(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """EC2 instances should require IMDSv2 to prevent SSRF-based metadata credential theft."""
+    results = []
+
+    for instance in resources.get("aws_instance", []):
+        metadata_options = instance.get("metadata_options", {})
+        # metadata_options may be a list due to hcl2 block parsing
+        if isinstance(metadata_options, list):
+            metadata_options = metadata_options[0] if metadata_options else {}
+        http_tokens = metadata_options.get("http_tokens", "optional")
+        requires_imdsv2 = http_tokens == "required"
+
+        results.append(
+            RuleResult(
+                rule_id="ec2_imdsv2_required",
+                category=CATEGORY,
+                severity="high",
+                passed=requires_imdsv2,
+                message="EC2 instance requires IMDSv2"
+                if requires_imdsv2
+                else "EC2 instance does not require IMDSv2 — instance metadata is vulnerable"
+                " to SSRF attacks",
+                resource=instance["_name"],
+            )
+        )
+
+    return results
+
+
+def check_ec2_no_public_ip(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """EC2 instances should not have a public IP address assigned automatically."""
+    results = []
+
+    for instance in resources.get("aws_instance", []):
+        has_public_ip = instance.get("associate_public_ip_address", False)
+
+        results.append(
+            RuleResult(
+                rule_id="ec2_no_public_ip",
+                category=CATEGORY,
+                severity="medium",
+                passed=not has_public_ip,
+                message="EC2 instance does not have a public IP address"
+                if not has_public_ip
+                else "EC2 instance has a public IP address — prefer private subnets"
+                " with a NAT gateway",
+                resource=instance["_name"],
+            )
+        )
+
+    return results
