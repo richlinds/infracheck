@@ -86,20 +86,24 @@ class TestRdsBackupRetention:
 class TestLambdaDlq:
     def test_passes_when_dlq_configured(self):
         resources = {
-            "aws_lambda_function": [{
-                "_name": "my_func",
-                "dead_letter_config": {"target_arn": "arn:aws:sqs:..."},
-            }]
+            "aws_lambda_function": [
+                {
+                    "_name": "my_func",
+                    "dead_letter_config": {"target_arn": "arn:aws:sqs:..."},
+                }
+            ]
         }
         results = check_lambda_dlq(resources)
         assert results[0].passed is True
 
     def test_passes_when_dead_letter_config_is_list(self):
         resources = {
-            "aws_lambda_function": [{
-                "_name": "my_func",
-                "dead_letter_config": [{"target_arn": "arn:aws:sqs:..."}],
-            }]
+            "aws_lambda_function": [
+                {
+                    "_name": "my_func",
+                    "dead_letter_config": [{"target_arn": "arn:aws:sqs:..."}],
+                }
+            ]
         }
         results = check_lambda_dlq(resources)
         assert results[0].passed is True
@@ -111,10 +115,12 @@ class TestLambdaDlq:
 
     def test_fails_when_target_arn_is_empty(self):
         resources = {
-            "aws_lambda_function": [{
-                "_name": "my_func",
-                "dead_letter_config": {"target_arn": ""},
-            }]
+            "aws_lambda_function": [
+                {
+                    "_name": "my_func",
+                    "dead_letter_config": {"target_arn": ""},
+                }
+            ]
         }
         results = check_lambda_dlq(resources)
         assert results[0].passed is False
@@ -127,30 +133,36 @@ class TestLambdaDlq:
 class TestDynamodbPitr:
     def test_passes_when_pitr_enabled(self):
         resources = {
-            "aws_dynamodb_table": [{
-                "_name": "my_table",
-                "point_in_time_recovery": {"enabled": True},
-            }]
+            "aws_dynamodb_table": [
+                {
+                    "_name": "my_table",
+                    "point_in_time_recovery": {"enabled": True},
+                }
+            ]
         }
         results = check_dynamodb_pitr(resources)
         assert results[0].passed is True
 
     def test_passes_when_pitr_is_list(self):
         resources = {
-            "aws_dynamodb_table": [{
-                "_name": "my_table",
-                "point_in_time_recovery": [{"enabled": True}],
-            }]
+            "aws_dynamodb_table": [
+                {
+                    "_name": "my_table",
+                    "point_in_time_recovery": [{"enabled": True}],
+                }
+            ]
         }
         results = check_dynamodb_pitr(resources)
         assert results[0].passed is True
 
     def test_fails_when_pitr_disabled(self):
         resources = {
-            "aws_dynamodb_table": [{
-                "_name": "my_table",
-                "point_in_time_recovery": {"enabled": False},
-            }]
+            "aws_dynamodb_table": [
+                {
+                    "_name": "my_table",
+                    "point_in_time_recovery": {"enabled": False},
+                }
+            ]
         }
         results = check_dynamodb_pitr(resources)
         assert results[0].passed is False
