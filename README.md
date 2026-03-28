@@ -11,18 +11,18 @@ infracheck reviews your infrastructure configuration and scores it across four c
 
 ## Usage
 
+```bash
+pip install infracheck
 infracheck analyze ./infra
+```
 
 ## Supported inputs
 
-- Terraform (.tf files) - supported
+- AWS Terraform resources - supported
+- GCP Terraform resources - planned
 - draw.io diagrams - planned
 - Architecture images - planned
 
-## Installation
-
-pip install infracheck
-
 ## Status
 
-Under active development.
+Under active development — CLI not yet available.
