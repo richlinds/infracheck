@@ -25,7 +25,9 @@ class Report(BaseModel):
 
     @property
     def failed_findings(self) -> list[RuleResult]:
-        return [finding for cat in self.categories for finding in cat.findings if not finding.passed]
+        return [
+            finding for cat in self.categories for finding in cat.findings if not finding.passed
+        ]
 
     @property
     def passed_findings(self) -> list[RuleResult]:
