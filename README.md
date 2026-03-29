@@ -1,19 +1,22 @@
 # infracheck
 
+![CI](https://github.com/richlinds/infracheck/actions/workflows/ci.yml/badge.svg)
+![Python](https://img.shields.io/badge/python-3.14-blue)
+
 Analyze software architecture for common design issues before they become production incidents.
 
 infracheck reviews your infrastructure configuration and scores it across four categories:
 
 - Fault Tolerance: DLQs, retries, Multi-AZ, backup policies
 - Scalability: autoscaling, read replicas, bottlenecks
-- Security: public access, open ingress, exposed databases
+- Security: public access, open ingress, exposed databases, IMDSv2, EC2 public IPs
 - Observability: CloudWatch alarms, log groups, X-Ray tracing, log retention, ALB access logging, CloudTrail integration, VPC flow logs
 
 ## Usage
 
 ```bash
 pip install infracheck
-infracheck analyze ./infra
+infracheck ./infra
 ```
 
 ## Supported inputs
@@ -34,4 +37,4 @@ Checkov and tfsec are great tools but they focus almost entirely on security mis
 
 ## Status
 
-Under active development — CLI not yet available.
+Under active development. Run `infracheck analyze` after installing — the CLI is functional but AI explanations (`--explain`) are not yet available.
