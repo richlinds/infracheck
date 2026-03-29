@@ -17,7 +17,7 @@ def check_sqs_dlq(resources: dict[str, list[dict]]) -> list[RuleResult]:
                 passed=has_dlq,
                 message="SQS queue has a dead-letter queue configured"
                 if has_dlq
-                else "SQS queue is missing a dead-letter queue — failed messages will be lost",
+                else "SQS queue is missing a dead-letter queue - failed messages will be lost",
                 resource=queue["_name"],
             )
         )
@@ -39,7 +39,7 @@ def check_rds_multi_az(resources: dict[str, list[dict]]) -> list[RuleResult]:
                 passed=is_multi_az,
                 message="RDS instance has Multi-AZ enabled"
                 if is_multi_az
-                else "RDS instance does not have Multi-AZ enabled — no automatic failover",
+                else "RDS instance does not have Multi-AZ enabled - no automatic failover",
                 resource=instance["_name"],
             )
         )
@@ -65,7 +65,7 @@ def check_rds_backup_retention(resources: dict[str, list[dict]]) -> list[RuleRes
                     f"RDS instance retains backups for {retention_days} days"
                     if has_sufficient_retention
                     else f"RDS instance backup retention is {retention_days} days"
-                    f" — recommended minimum is {minimum_retention_days}"
+                    f" - recommended minimum is {minimum_retention_days}"
                 ),
                 resource=instance["_name"],
             )
@@ -93,7 +93,7 @@ def check_lambda_dlq(resources: dict[str, list[dict]]) -> list[RuleResult]:
                 passed=has_dlq,
                 message="Lambda function has a dead-letter queue configured"
                 if has_dlq
-                else "Lambda function has no dead-letter queue — failed async invocations"
+                else "Lambda function has no dead-letter queue - failed async invocations"
                 " will be silently dropped",
                 resource=function["_name"],
             )
@@ -122,7 +122,7 @@ def check_dynamodb_pitr(resources: dict[str, list[dict]]) -> list[RuleResult]:
                 message="DynamoDB table has point-in-time recovery enabled"
                 if has_pitr
                 else "DynamoDB table does not have point-in-time recovery enabled"
-                " — data loss window is up to 24 hours",
+                " - data loss window is up to 24 hours",
                 resource=table["_name"],
             )
         )
@@ -146,7 +146,7 @@ def check_rds_deletion_protection(resources: dict[str, list[dict]]) -> list[Rule
                 message="RDS instance has deletion protection enabled"
                 if has_deletion_protection
                 else "RDS instance does not have deletion protection enabled"
-                " — it can be deleted accidentally",
+                " - it can be deleted accidentally",
                 resource=instance["_name"],
             )
         )

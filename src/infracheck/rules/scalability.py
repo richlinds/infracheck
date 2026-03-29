@@ -135,7 +135,7 @@ def check_elasticache_backup_retention(resources: dict[str, list[dict]]) -> list
                 message=f"ElastiCache replication group retains snapshots for {retention_days} days"
                 if has_backups
                 else "ElastiCache replication group has no snapshot retention configured"
-                " — data will be lost if the cluster fails",
+                " - data will be lost if the cluster fails",
                 resource=replication_group["_name"],
             )
         )

@@ -14,7 +14,7 @@ def check_cloudwatch_alarms_exist(resources: dict[str, list[dict]]) -> list[Rule
             passed=has_alarms,
             message="At least one CloudWatch alarm is configured"
             if has_alarms
-            else "No CloudWatch alarms found — issues may go undetected in production",
+            else "No CloudWatch alarms found - issues may go undetected in production",
         )
     ]
 
@@ -40,7 +40,7 @@ def check_lambda_log_groups(resources: dict[str, list[dict]]) -> list[RuleResult
                 passed=has_log_group,
                 message=f"Lambda function has a log group at {expected_log_group}"
                 if has_log_group
-                else "Lambda function is missing a log group — logs may not be retained",
+                else "Lambda function is missing a log group - logs may not be retained",
                 resource=function["_name"],
             )
         )
@@ -68,7 +68,7 @@ def check_lambda_xray_tracing(resources: dict[str, list[dict]]) -> list[RuleResu
                 message="Lambda function has X-Ray tracing enabled"
                 if has_tracing
                 else "Lambda function does not have X-Ray tracing enabled"
-                " — distributed tracing will not be available",
+                " - distributed tracing will not be available",
                 resource=function["_name"],
             )
         )
@@ -92,7 +92,7 @@ def check_log_group_retention(resources: dict[str, list[dict]]) -> list[RuleResu
                 passed=has_retention,
                 message=f"CloudWatch log group has a retention period of {retention_days} days"
                 if has_retention
-                else "CloudWatch log group has no retention period — logs will be kept forever"
+                else "CloudWatch log group has no retention period - logs will be kept forever"
                 " and costs will grow unbounded",
                 resource=log_group["_name"],
             )
@@ -124,7 +124,7 @@ def check_alb_access_logging(resources: dict[str, list[dict]]) -> list[RuleResul
                 passed=has_logging,
                 message="ALB has access logging enabled"
                 if has_logging
-                else "ALB does not have access logging enabled — request-level data will be lost",
+                else "ALB does not have access logging enabled - request-level data will be lost",
                 resource=load_balancer["_name"],
             )
         )
@@ -148,7 +148,7 @@ def check_cloudtrail_cloudwatch_integration(resources: dict[str, list[dict]]) ->
                 message="CloudTrail trail is integrated with CloudWatch Logs"
                 if has_integration
                 else "CloudTrail trail is not integrated with CloudWatch Logs"
-                " — API activity will not feed into alarms or metric filters",
+                " - API activity will not feed into alarms or metric filters",
                 resource=trail["_name"],
             )
         )
@@ -177,7 +177,7 @@ def check_vpc_flow_logs(resources: dict[str, list[dict]]) -> list[RuleResult]:
                 passed=has_flow_logs,
                 message="VPC has flow logs enabled"
                 if has_flow_logs
-                else "VPC does not have flow logs enabled — network traffic will not be logged",
+                else "VPC does not have flow logs enabled - network traffic will not be logged",
                 resource=vpc["_name"],
             )
         )

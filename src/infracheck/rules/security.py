@@ -22,7 +22,7 @@ def check_s3_public_access(resources: dict[str, list[dict]]) -> list[RuleResult]
                 passed=is_blocked,
                 message="S3 bucket has all public access settings blocked"
                 if is_blocked
-                else "S3 bucket does not fully block public access — data may be publicly exposed",
+                else "S3 bucket does not fully block public access - data may be publicly exposed",
                 resource=bucket["_name"],
             )
         )
@@ -44,7 +44,7 @@ def check_rds_not_publicly_accessible(resources: dict[str, list[dict]]) -> list[
                 passed=not is_public,
                 message="RDS instance is not publicly accessible"
                 if not is_public
-                else "RDS instance is publicly accessible — database should not be exposed"
+                else "RDS instance is publicly accessible - database should not be exposed"
                 " to the internet",
                 resource=instance["_name"],
             )
@@ -107,7 +107,7 @@ def check_ec2_imdsv2_required(resources: dict[str, list[dict]]) -> list[RuleResu
                 passed=requires_imdsv2,
                 message="EC2 instance requires IMDSv2"
                 if requires_imdsv2
-                else "EC2 instance does not require IMDSv2 — instance metadata is vulnerable"
+                else "EC2 instance does not require IMDSv2 - instance metadata is vulnerable"
                 " to SSRF attacks",
                 resource=instance["_name"],
             )
@@ -131,7 +131,7 @@ def check_ec2_no_public_ip(resources: dict[str, list[dict]]) -> list[RuleResult]
                 passed=not has_public_ip,
                 message="EC2 instance does not have a public IP address"
                 if not has_public_ip
-                else "EC2 instance has a public IP address — prefer private subnets"
+                else "EC2 instance has a public IP address - prefer private subnets"
                 " with a NAT gateway",
                 resource=instance["_name"],
             )
