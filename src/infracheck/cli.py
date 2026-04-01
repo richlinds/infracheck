@@ -13,6 +13,11 @@ def analyze(
         default=None,
         help="Path to the directory containing Terraform files.",
     ),
+    explain: bool = typer.Option(
+        False,
+        "--explain",
+        help="Use Claude to add plain-language explanations to each failing check.",
+    ),
 ) -> None:
     """Analyze a Terraform directory and score it across four categories."""
     # Resolve path: CLI argument → INFRACHECK_PATH env var → ./infra
@@ -37,6 +42,22 @@ def analyze(
         raise typer.Exit(code=1)
 
     report = run(path=resolved_path, resources=resources)
+
+    if explain:
+        if not os.getenv("ANTHROPIC_API_KEY"):
+            typer.echo(
+                typer.style(
+                    "Error: ANTHROPIC_API_KEY is not set. Export it to use --explain.",
+                    fg="red",
+                ),
+                err=True,
+            )
+            raise typer.Exit(code=1)
+        typer.echo("Generating explanations...")
+        from infracheck.explainer import explain_findings
+
+        report = explain_findings(report)
+
     print_report(report)
 
     # Exit with a non-zero code if the overall score is below 5

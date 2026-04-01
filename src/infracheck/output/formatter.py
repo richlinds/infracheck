@@ -51,6 +51,9 @@ def print_report(report: Report) -> None:
             severity_tag = typer.style(f"[{finding.severity}]", fg=colour)
             resource_tag = f" ({finding.resource})" if finding.resource else ""
             typer.echo(f"    {severity_tag} {finding.message}{resource_tag}")
+            if finding.ai_explanation:
+                fix_label = typer.style("fix:", fg="cyan", bold=True)
+                typer.echo(f"         {fix_label} {finding.ai_explanation}")
 
     typer.echo()
     typer.echo("-" * 50)
