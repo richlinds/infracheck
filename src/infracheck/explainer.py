@@ -59,16 +59,7 @@ def explain_findings(report: Report) -> Report:
         for item in response.parsed_output.explanations
     }
 
-    # Rebuild the report with explanations injected into failed findings
-    updated_categories = []
-    for category in report.categories:
-        updated_findings = []
-        for finding in category.findings:
-            if not finding.passed:
-                explanation = explanation_map.get((finding.rule_id, finding.resource))
-                updated_findings.append(finding.model_copy(update={"ai_explanation": explanation}))
-            else:
-                updated_findings.append(finding)
-        updated_categories.append(category.model_copy(update={"findings": updated_findings}))
+    for finding in failed_findings:
+        finding.ai_explanation = explanation_map.get((finding.rule_id, finding.resource))
 
-    return report.model_copy(update={"categories": updated_categories})
+    return report
