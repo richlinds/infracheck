@@ -19,6 +19,49 @@ pip install infracheck
 infracheck ./infra
 ```
 
+### AI explanations
+
+Pass `--explain` to have Claude generate a specific Terraform fix for each failing check:
+
+```bash
+infracheck ./infra --explain
+```
+
+Filter to a single category to focus the output:
+
+```bash
+infracheck ./infra --explain security
+infracheck ./infra --explain fault_tolerance
+infracheck ./infra --explain scalability
+infracheck ./infra --explain observability
+```
+
+Requires an Anthropic API key — get one at [console.anthropic.com](https://console.anthropic.com):
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+### JSON output
+
+Pass `--output json` (or `-o json`) for machine-readable output:
+
+```bash
+infracheck ./infra --output json
+infracheck ./infra --output json --explain security | jq '.overall_score'
+```
+
+Status messages are written to stderr so they don't pollute the JSON stream.
+
+### Configuration
+
+| Environment variable    | Default           | Description                        |
+|-------------------------|-------------------|------------------------------------|
+| `ANTHROPIC_API_KEY`     | —                 | Required to use `--explain`        |
+| `INFRACHECK_MODEL`      | `claude-opus-4-6` | Claude model used for explanations |
+| `INFRACHECK_MAX_TOKENS` | `4096`            | Max tokens for explanation output  |
+| `INFRACHECK_PATH`       | `./infra`         | Default path if none is specified  |
+
 ## Supported inputs
 
 - AWS Terraform resources - supported
@@ -37,4 +80,4 @@ Checkov and tfsec are great tools but they focus almost entirely on security mis
 
 ## Status
 
-Under active development. Run `infracheck analyze` after installing — the CLI is functional but AI explanations (`--explain`) are not yet available.
+Under active development.
