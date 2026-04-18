@@ -1,3 +1,5 @@
+import json
+
 import typer
 
 from infracheck.models import Report
@@ -62,3 +64,9 @@ def print_report(report: Report) -> None:
     )
     typer.echo(f"  Overall score  {overall_str}/10")
     typer.echo()
+
+
+def print_json(report: Report) -> None:
+    """Print the report as JSON to stdout."""
+    data = report.model_dump()
+    typer.echo(json.dumps(data, indent=2))

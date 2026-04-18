@@ -1,11 +1,17 @@
 import os
 import sys
+from enum import Enum
 
 import typer
 
 from infracheck.analyzers.engine import run
-from infracheck.output.formatter import print_report
+from infracheck.output.formatter import print_json, print_report
 from infracheck.parsers.terraform import parse_directory
+
+
+class OutputFormat(str, Enum):
+    text = "text"
+    json = "json"
 
 
 def analyze(
@@ -17,6 +23,12 @@ def analyze(
         False,
         "--explain",
         help="Use Claude to add plain-language explanations to each failing check.",
+    ),
+    output: OutputFormat = typer.Option(
+        OutputFormat.text,
+        "--output",
+        "-o",
+        help="Output format: text (default) or json.",
     ),
 ) -> None:
     """Analyze a Terraform directory and score it across four categories."""
@@ -30,7 +42,9 @@ def analyze(
         )
         raise typer.Exit(code=1)
 
-    typer.echo(f"Analyzing {resolved_path}...")
+    json_mode = output == OutputFormat.json
+
+    typer.echo(f"Analyzing {resolved_path}...", err=json_mode)
 
     resources = parse_directory(resolved_path)
 
@@ -53,12 +67,15 @@ def analyze(
                 err=True,
             )
             raise typer.Exit(code=1)
-        typer.echo("Generating explanations...")
+        typer.echo("Generating explanations...", err=json_mode)
         from infracheck.explainer import explain_findings
 
         report = explain_findings(report)
 
-    print_report(report)
+    if json_mode:
+        print_json(report)
+    else:
+        print_report(report)
 
     # Exit with a non-zero code if the overall score is below 5
     if report.overall_score < 5:
