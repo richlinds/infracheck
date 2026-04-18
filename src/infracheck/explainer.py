@@ -1,7 +1,12 @@
+import os
+
 import anthropic
 from pydantic import BaseModel
 
 from infracheck.models import Report, RuleResult
+
+DEFAULT_MODEL = "claude-opus-4-6"
+DEFAULT_MAX_TOKENS = 4096
 
 
 class FindingExplanation(BaseModel):
@@ -56,8 +61,8 @@ def explain_findings(report: Report, categories: set[str] | None = None) -> Repo
     client = anthropic.Anthropic()
 
     response = client.messages.parse(
-        model="claude-opus-4-6",
-        max_tokens=4096,
+        model=os.getenv("INFRACHECK_MODEL", DEFAULT_MODEL),
+        max_tokens=int(os.getenv("INFRACHECK_MAX_TOKENS", DEFAULT_MAX_TOKENS)),
         messages=[{"role": "user", "content": _build_prompt(failed_findings)}],
         output_format=ExplanationResponse,
     )
