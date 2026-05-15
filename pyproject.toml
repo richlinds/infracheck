@@ -1,10 +1,32 @@
 [project]
-name = "infracheck"
+name = "infracheck-cli"
 version = "0.1.0"
 description = "Analyze software architecture for fault tolerance, scalability, security, and observability issues"
 readme = "README.md"
 authors = [
     { name = "Richard L", email = "5652020+RichLinds1988@users.noreply.github.com" }
+]
+keywords = [
+    "terraform",
+    "aws",
+    "infrastructure",
+    "infrastructure-as-code",
+    "iac",
+    "static-analysis",
+    "security",
+    "devops",
+    "observability",
+    "cli",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Security",
+    "Programming Language :: Python :: 3",
 ]
 requires-python = ">=3.14"
 dependencies = [
@@ -21,6 +43,9 @@ infracheck = "infracheck.cli:main"
 [build-system]
 requires = ["uv_build>=0.11.2,<0.12.0"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "infracheck"
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.15"]
