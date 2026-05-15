@@ -1,6 +1,7 @@
 # infracheck
 
 ![CI](https://github.com/richlinds/infracheck/actions/workflows/ci.yml/badge.svg)
+![PyPI](https://img.shields.io/pypi/v/infracheck-cli)
 ![Python](https://img.shields.io/badge/python-3.14-blue)
 
 Analyze software architecture for common design issues before they become production incidents.
@@ -15,7 +16,7 @@ infracheck reviews your infrastructure configuration and scores it across four c
 ## Usage
 
 ```bash
-pip install infracheck
+pip install infracheck-cli
 infracheck ./infra
 ```
 
