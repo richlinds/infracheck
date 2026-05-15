@@ -8,10 +8,10 @@ Analyze software architecture for common design issues before they become produc
 
 infracheck reviews your infrastructure configuration and scores it across four categories:
 
-- Fault Tolerance: DLQs, retries, Multi-AZ, backup policies, S3 versioning, ECS deployment health, SNS redrive policies
-- Scalability: autoscaling, read replicas, ECS service scaling, SQS receive count limits
-- Security: public access, open ingress, exposed databases, IMDSv2, EC2 public IPs, S3 and RDS encryption, Lambda secrets in env vars
-- Observability: CloudWatch alarms, log groups, X-Ray tracing, log retention, ALB access logging, CloudTrail integration, VPC flow logs, ECS Container Insights, RDS enhanced monitoring, S3 access logging
+- Fault Tolerance: DLQs, Multi-AZ, backups, S3 versioning, ECS deployment health, Lambda timeouts, ALB health checks
+- Scalability: autoscaling, read replicas, ECS task counts, Lambda memory, RDS instance sizing
+- Security: public access, open ingress, encryption at rest, KMS rotation, CloudTrail validation, IAM auth, S3 ACLs
+- Observability: CloudWatch alarms and dashboards, X-Ray tracing, VPC flow logs, ECS Container Insights, RDS Performance Insights, ElastiCache logs
 
 ## Usage
 
@@ -78,6 +78,11 @@ Status messages are written to stderr so they don't pollute the JSON stream.
 | `s3_versioning_enabled` | medium | S3 bucket has versioning enabled |
 | `ecs_min_healthy_percent` | high | ECS service keeps at least 50% of tasks running during deployments |
 | `sns_topic_dlq_configured` | medium | SNS topic has a redrive policy |
+| `lambda_timeout_configured` | medium | Lambda function timeout is above the 3s default |
+| `alb_target_group_health_check` | medium | ALB target group has an explicit health check configured |
+| `rds_auto_minor_version_upgrade` | low | RDS instance has automatic minor version upgrades enabled |
+| `elasticache_multi_az` | medium | ElastiCache replication group has Multi-AZ enabled |
+| `ecs_task_definition_cpu_memory` | medium | ECS task definition has explicit CPU and memory limits |
 
 ### Scalability
 
@@ -93,6 +98,9 @@ Status messages are written to stderr so they don't pollute the JSON stream.
 | `load_balancer_cross_zone` | medium | NLB/GWLB has cross-zone load balancing enabled |
 | `ecs_service_autoscaling` | medium | ECS service has Application Auto Scaling configured |
 | `sqs_max_receive_count` | medium | SQS queue DLQ `maxReceiveCount` is at least 3 |
+| `lambda_memory_size` | low | Lambda function memory is above the 128 MB default |
+| `rds_not_micro_instance` | medium | RDS instance is not using a micro instance class |
+| `ecs_service_multiple_tasks` | medium | ECS service runs at least 2 tasks |
 
 ### Security
 
@@ -106,6 +114,10 @@ Status messages are written to stderr so they don't pollute the JSON stream.
 | `s3_encryption_enabled` | medium | S3 bucket has server-side encryption configured |
 | `rds_storage_encrypted` | high | RDS instance has storage encryption enabled |
 | `lambda_no_secrets_in_env` | medium | Lambda env vars contain no obvious secret keys |
+| `kms_key_rotation_enabled` | medium | KMS key has automatic rotation enabled |
+| `cloudtrail_log_file_validation` | medium | CloudTrail trail has log file validation enabled |
+| `rds_iam_authentication` | low | RDS instance has IAM authentication enabled |
+| `s3_bucket_acl_not_public` | high | S3 bucket ACL does not grant public access |
 
 ### Observability
 
@@ -121,6 +133,10 @@ Status messages are written to stderr so they don't pollute the JSON stream.
 | `ecs_container_insights_enabled` | medium | ECS cluster has Container Insights enabled |
 | `rds_enhanced_monitoring` | low | RDS instance has enhanced monitoring enabled |
 | `s3_server_access_logging_enabled` | low | S3 bucket has server access logging enabled |
+| `rds_performance_insights` | low | RDS instance has Performance Insights enabled |
+| `elasticache_log_delivery` | low | ElastiCache replication group has log delivery configured |
+| `s3_request_metrics_enabled` | low | S3 bucket has request metrics enabled |
+| `cloudwatch_dashboard_exists` | low | At least one CloudWatch dashboard is defined |
 
 ## Supported inputs
 

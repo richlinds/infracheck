@@ -229,6 +229,83 @@ def check_ecs_service_autoscaling(resources: dict[str, list[dict]]) -> list[Rule
     return results
 
 
+def check_lambda_memory_size(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """Lambda functions should use more than the 128 MB default memory allocation."""
+    results = []
+    default_memory = 128
+
+    for function in resources.get("aws_lambda_function", []):
+        memory = function.get("memory_size", default_memory)
+        above_default = memory > default_memory
+
+        results.append(
+            RuleResult(
+                rule_id="lambda_memory_size",
+                category=CATEGORY,
+                severity="low",
+                passed=above_default,
+                message=f"Lambda function has {memory} MB of memory allocated"
+                if above_default
+                else f"Lambda function is using the default {default_memory} MB memory"
+                " - this is often a performance bottleneck",
+                resource=function["_name"],
+            )
+        )
+
+    return results
+
+
+def check_rds_not_micro_instance(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """RDS instances should not use micro instance classes in production."""
+    results = []
+    micro_classes = {"db.t2.micro", "db.t3.micro", "db.t4g.micro"}
+
+    for instance in resources.get("aws_db_instance", []):
+        instance_class = instance.get("instance_class", "")
+        is_micro = instance_class in micro_classes
+
+        results.append(
+            RuleResult(
+                rule_id="rds_not_micro_instance",
+                category=CATEGORY,
+                severity="medium",
+                passed=not is_micro,
+                message=f"RDS instance class is {instance_class}"
+                if not is_micro
+                else f"RDS instance is using {instance_class}"
+                " - micro instances are not suitable for production workloads",
+                resource=instance["_name"],
+            )
+        )
+
+    return results
+
+
+def check_ecs_service_multiple_tasks(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """ECS services should run at least 2 tasks for availability and load distribution."""
+    results = []
+
+    for service in resources.get("aws_ecs_service", []):
+        desired_count = service.get("desired_count", 1)
+        has_multiple = desired_count >= 2
+
+        results.append(
+            RuleResult(
+                rule_id="ecs_service_multiple_tasks",
+                category=CATEGORY,
+                severity="medium",
+                passed=has_multiple,
+                message=f"ECS service has {desired_count} tasks configured"
+                if has_multiple
+                else f"ECS service has only {desired_count} task configured"
+                " - a single task cannot handle load distribution or survive restarts",
+                resource=service["_name"],
+            )
+        )
+
+    return results
+
+
 def check_sqs_max_receive_count(resources: dict[str, list[dict]]) -> list[RuleResult]:
     """SQS queues with a DLQ should set maxReceiveCount to at least 3."""
     results = []

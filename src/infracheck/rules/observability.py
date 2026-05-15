@@ -265,3 +265,95 @@ def check_s3_server_access_logging(resources: dict[str, list[dict]]) -> list[Rul
         )
 
     return results
+
+
+def check_rds_performance_insights(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """RDS instances should have Performance Insights enabled for query-level monitoring."""
+    results = []
+
+    for instance in resources.get("aws_db_instance", []):
+        has_insights = instance.get("performance_insights_enabled", False)
+
+        results.append(
+            RuleResult(
+                rule_id="rds_performance_insights",
+                category=CATEGORY,
+                severity="low",
+                passed=has_insights,
+                message="RDS instance has Performance Insights enabled"
+                if has_insights
+                else "RDS instance does not have Performance Insights enabled"
+                " - query-level performance data will not be available",
+                resource=instance["_name"],
+            )
+        )
+
+    return results
+
+
+def check_elasticache_log_delivery(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """ElastiCache replication groups should have log delivery configured."""
+    results = []
+
+    for replication_group in resources.get("aws_elasticache_replication_group", []):
+        log_delivery = replication_group.get("log_delivery_configuration", [])
+        # log_delivery_configuration may be a single dict due to hcl2 block parsing
+        if isinstance(log_delivery, dict):
+            log_delivery = [log_delivery]
+        has_logging = len(log_delivery) > 0
+
+        results.append(
+            RuleResult(
+                rule_id="elasticache_log_delivery",
+                category=CATEGORY,
+                severity="low",
+                passed=has_logging,
+                message="ElastiCache replication group has log delivery configured"
+                if has_logging
+                else "ElastiCache replication group has no log delivery configured"
+                " - slow logs and engine logs will not be captured",
+                resource=replication_group["_name"],
+            )
+        )
+
+    return results
+
+
+def check_s3_request_metrics(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """S3 buckets should have request metrics enabled for visibility into access patterns."""
+    results = []
+
+    has_metrics = len(resources.get("aws_s3_bucket_metric", [])) > 0
+
+    for bucket in resources.get("aws_s3_bucket", []):
+        results.append(
+            RuleResult(
+                rule_id="s3_request_metrics_enabled",
+                category=CATEGORY,
+                severity="low",
+                passed=has_metrics,
+                message="S3 bucket has request metrics enabled"
+                if has_metrics
+                else "S3 bucket has no request metrics configured"
+                " - access patterns will not be visible in CloudWatch",
+                resource=bucket["_name"],
+            )
+        )
+
+    return results
+
+
+def check_cloudwatch_dashboard_exists(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """There should be at least one CloudWatch dashboard for operational visibility."""
+    has_dashboard = len(resources.get("aws_cloudwatch_dashboard", [])) > 0
+    return [
+        RuleResult(
+            rule_id="cloudwatch_dashboard_exists",
+            category=CATEGORY,
+            severity="low",
+            passed=has_dashboard,
+            message="At least one CloudWatch dashboard is configured"
+            if has_dashboard
+            else "No CloudWatch dashboards found - there is no central view of system health",
+        )
+    ]

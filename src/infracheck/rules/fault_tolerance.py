@@ -229,3 +229,132 @@ def check_sns_topic_dlq(resources: dict[str, list[dict]]) -> list[RuleResult]:
         )
 
     return results
+
+
+def check_lambda_timeout(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """Lambda functions should have a timeout set above the 3-second default."""
+    results = []
+    default_timeout = 3
+
+    for function in resources.get("aws_lambda_function", []):
+        timeout = function.get("timeout", default_timeout)
+        is_configured = timeout > default_timeout
+
+        results.append(
+            RuleResult(
+                rule_id="lambda_timeout_configured",
+                category=CATEGORY,
+                severity="medium",
+                passed=is_configured,
+                message=f"Lambda function has a timeout of {timeout}s"
+                if is_configured
+                else f"Lambda function is using the {default_timeout}s default timeout"
+                " - this is too low for most production workloads",
+                resource=function["_name"],
+            )
+        )
+
+    return results
+
+
+def check_alb_target_group_health_check(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """ALB target groups should have an explicit health check configured."""
+    results = []
+
+    for tg in resources.get("aws_lb_target_group", []):
+        health_check = tg.get("health_check", {})
+        # health_check may be a list due to hcl2 block parsing
+        if isinstance(health_check, list):
+            health_check = health_check[0] if health_check else {}
+        has_health_check = bool(health_check)
+
+        results.append(
+            RuleResult(
+                rule_id="alb_target_group_health_check",
+                category=CATEGORY,
+                severity="medium",
+                passed=has_health_check,
+                message="ALB target group has a health check configured"
+                if has_health_check
+                else "ALB target group has no explicit health check"
+                " - unhealthy targets may receive traffic",
+                resource=tg["_name"],
+            )
+        )
+
+    return results
+
+
+def check_rds_auto_minor_version_upgrade(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """RDS instances should have automatic minor version upgrades enabled."""
+    results = []
+
+    for instance in resources.get("aws_db_instance", []):
+        # Default in AWS and Terraform is True - only fails if explicitly disabled
+        has_upgrade = instance.get("auto_minor_version_upgrade", True)
+
+        results.append(
+            RuleResult(
+                rule_id="rds_auto_minor_version_upgrade",
+                category=CATEGORY,
+                severity="low",
+                passed=has_upgrade,
+                message="RDS instance has automatic minor version upgrades enabled"
+                if has_upgrade
+                else "RDS instance has automatic minor version upgrades disabled"
+                " - security patches will not be applied automatically",
+                resource=instance["_name"],
+            )
+        )
+
+    return results
+
+
+def check_elasticache_multi_az(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """ElastiCache replication groups should have Multi-AZ enabled for high availability."""
+    results = []
+
+    for replication_group in resources.get("aws_elasticache_replication_group", []):
+        has_multi_az = replication_group.get("multi_az_enabled", False)
+
+        results.append(
+            RuleResult(
+                rule_id="elasticache_multi_az",
+                category=CATEGORY,
+                severity="medium",
+                passed=has_multi_az,
+                message="ElastiCache replication group has Multi-AZ enabled"
+                if has_multi_az
+                else "ElastiCache replication group does not have Multi-AZ enabled"
+                " - a zone failure will cause downtime",
+                resource=replication_group["_name"],
+            )
+        )
+
+    return results
+
+
+def check_ecs_task_definition_cpu_memory(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """ECS task definitions should have explicit CPU and memory limits set."""
+    results = []
+
+    for task_def in resources.get("aws_ecs_task_definition", []):
+        has_cpu = bool(task_def.get("cpu"))
+        has_memory = bool(task_def.get("memory"))
+        is_configured = has_cpu and has_memory
+
+        results.append(
+            RuleResult(
+                rule_id="ecs_task_definition_cpu_memory",
+                category=CATEGORY,
+                severity="medium",
+                passed=is_configured,
+                message="ECS task definition has CPU and memory limits set"
+                if is_configured
+                else "ECS task definition is missing CPU or memory limits"
+                " - tasks may starve or be terminated unexpectedly",
+                resource=task_def["_name"],
+            )
+        )
+
+    return results

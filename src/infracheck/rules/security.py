@@ -191,6 +191,103 @@ def check_rds_encryption(resources: dict[str, list[dict]]) -> list[RuleResult]:
     return results
 
 
+def check_kms_key_rotation(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """KMS keys should have automatic key rotation enabled."""
+    results = []
+
+    for key in resources.get("aws_kms_key", []):
+        has_rotation = key.get("enable_key_rotation", False)
+
+        results.append(
+            RuleResult(
+                rule_id="kms_key_rotation_enabled",
+                category=CATEGORY,
+                severity="medium",
+                passed=has_rotation,
+                message="KMS key has automatic rotation enabled"
+                if has_rotation
+                else "KMS key does not have automatic rotation enabled"
+                " - compromised keys will remain valid indefinitely",
+                resource=key["_name"],
+            )
+        )
+
+    return results
+
+
+def check_cloudtrail_log_file_validation(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """CloudTrail trails should have log file validation enabled to detect tampering."""
+    results = []
+
+    for trail in resources.get("aws_cloudtrail", []):
+        has_validation = trail.get("enable_log_file_validation", False)
+
+        results.append(
+            RuleResult(
+                rule_id="cloudtrail_log_file_validation",
+                category=CATEGORY,
+                severity="medium",
+                passed=has_validation,
+                message="CloudTrail trail has log file validation enabled"
+                if has_validation
+                else "CloudTrail trail does not have log file validation enabled"
+                " - log tampering will go undetected",
+                resource=trail["_name"],
+            )
+        )
+
+    return results
+
+
+def check_rds_iam_authentication(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """RDS instances should have IAM authentication enabled to avoid long-lived passwords."""
+    results = []
+
+    for instance in resources.get("aws_db_instance", []):
+        has_iam_auth = instance.get("iam_database_authentication_enabled", False)
+
+        results.append(
+            RuleResult(
+                rule_id="rds_iam_authentication",
+                category=CATEGORY,
+                severity="low",
+                passed=has_iam_auth,
+                message="RDS instance has IAM authentication enabled"
+                if has_iam_auth
+                else "RDS instance does not have IAM authentication enabled"
+                " - database access relies on long-lived passwords",
+                resource=instance["_name"],
+            )
+        )
+
+    return results
+
+
+def check_s3_no_public_acl(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """S3 bucket ACLs should not grant public access."""
+    results = []
+    public_acls = {"public-read", "public-read-write", "authenticated-read"}
+
+    for bucket_acl in resources.get("aws_s3_bucket_acl", []):
+        acl = bucket_acl.get("acl", "private")
+        is_public = acl in public_acls
+
+        results.append(
+            RuleResult(
+                rule_id="s3_bucket_acl_not_public",
+                category=CATEGORY,
+                severity="high",
+                passed=not is_public,
+                message="S3 bucket ACL does not grant public access"
+                if not is_public
+                else f"S3 bucket has a public ACL ({acl}) - objects may be publicly accessible",
+                resource=bucket_acl["_name"],
+            )
+        )
+
+    return results
+
+
 def check_lambda_no_secrets_in_env(resources: dict[str, list[dict]]) -> list[RuleResult]:
     """Lambda functions should not store secrets in plain-text environment variables."""
     results = []
