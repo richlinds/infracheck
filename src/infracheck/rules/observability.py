@@ -183,3 +183,85 @@ def check_vpc_flow_logs(resources: dict[str, list[dict]]) -> list[RuleResult]:
         )
 
     return results
+
+
+def check_ecs_container_insights(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """ECS clusters should have Container Insights enabled for enhanced monitoring."""
+    results = []
+
+    for cluster in resources.get("aws_ecs_cluster", []):
+        settings = cluster.get("setting", [])
+        # setting may be a single dict due to hcl2 block parsing
+        if isinstance(settings, dict):
+            settings = [settings]
+
+        has_insights = any(
+            setting.get("name") == "containerInsights" and setting.get("value") == "enabled"
+            for setting in settings
+        )
+
+        results.append(
+            RuleResult(
+                rule_id="ecs_container_insights_enabled",
+                category=CATEGORY,
+                severity="medium",
+                passed=has_insights,
+                message="ECS cluster has Container Insights enabled"
+                if has_insights
+                else "ECS cluster does not have Container Insights enabled"
+                " - container-level metrics and logs will not be available",
+                resource=cluster["_name"],
+            )
+        )
+
+    return results
+
+
+def check_rds_enhanced_monitoring(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """RDS instances should have enhanced monitoring enabled for OS-level metrics."""
+    results = []
+
+    for instance in resources.get("aws_db_instance", []):
+        monitoring_interval = instance.get("monitoring_interval", 0)
+        has_monitoring = monitoring_interval > 0
+        msg = f"RDS instance has enhanced monitoring enabled (interval: {monitoring_interval}s)"
+
+        results.append(
+            RuleResult(
+                rule_id="rds_enhanced_monitoring",
+                category=CATEGORY,
+                severity="low",
+                passed=has_monitoring,
+                message=msg
+                if has_monitoring
+                else "RDS instance does not have enhanced monitoring enabled"
+                " - OS-level metrics will not be visible",
+                resource=instance["_name"],
+            )
+        )
+
+    return results
+
+
+def check_s3_server_access_logging(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """S3 buckets should have server access logging enabled to record access requests."""
+    results = []
+
+    for logging_config in resources.get("aws_s3_bucket_logging", []):
+        has_logging = bool(logging_config.get("target_bucket"))
+
+        results.append(
+            RuleResult(
+                rule_id="s3_server_access_logging_enabled",
+                category=CATEGORY,
+                severity="low",
+                passed=has_logging,
+                message="S3 bucket has server access logging enabled"
+                if has_logging
+                else "S3 bucket does not have server access logging enabled"
+                " - access requests will not be recorded",
+                resource=logging_config["_name"],
+            )
+        )
+
+    return results

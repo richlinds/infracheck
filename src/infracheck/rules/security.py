@@ -138,3 +138,91 @@ def check_ec2_no_public_ip(resources: dict[str, list[dict]]) -> list[RuleResult]
         )
 
     return results
+
+
+def check_s3_encryption(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """S3 buckets should have server-side encryption configured."""
+    results = []
+
+    for encryption_config in resources.get(
+        "aws_s3_bucket_server_side_encryption_configuration", []
+    ):
+        rule_block = encryption_config.get("rule", [])
+        has_encryption = bool(rule_block)
+
+        results.append(
+            RuleResult(
+                rule_id="s3_encryption_enabled",
+                category=CATEGORY,
+                severity="medium",
+                passed=has_encryption,
+                message="S3 bucket has server-side encryption configured"
+                if has_encryption
+                else "S3 bucket does not have server-side encryption configured"
+                " - data is stored unencrypted at rest",
+                resource=encryption_config["_name"],
+            )
+        )
+
+    return results
+
+
+def check_rds_encryption(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """RDS instances should have storage encryption enabled."""
+    results = []
+
+    for instance in resources.get("aws_db_instance", []):
+        is_encrypted = instance.get("storage_encrypted", False)
+
+        results.append(
+            RuleResult(
+                rule_id="rds_storage_encrypted",
+                category=CATEGORY,
+                severity="high",
+                passed=is_encrypted,
+                message="RDS instance has storage encryption enabled"
+                if is_encrypted
+                else "RDS instance does not have storage encryption enabled"
+                " - data at rest is unencrypted",
+                resource=instance["_name"],
+            )
+        )
+
+    return results
+
+
+def check_lambda_no_secrets_in_env(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """Lambda functions should not store secrets in plain-text environment variables."""
+    results = []
+    secret_patterns = {"PASSWORD", "PASSWD", "SECRET_KEY", "PRIVATE_KEY", "API_KEY"}
+
+    for function in resources.get("aws_lambda_function", []):
+        environment = function.get("environment", {})
+        # environment may be a list due to hcl2 block parsing
+        if isinstance(environment, list):
+            environment = environment[0] if environment else {}
+        env_vars = environment.get("variables", {}) if environment else {}
+        if isinstance(env_vars, list):
+            env_vars = env_vars[0] if env_vars else {}
+
+        exposed_keys = [
+            key
+            for key in (env_vars or {})
+            if any(pattern in key.upper() for pattern in secret_patterns)
+        ]
+        has_secrets = len(exposed_keys) > 0
+
+        results.append(
+            RuleResult(
+                rule_id="lambda_no_secrets_in_env",
+                category=CATEGORY,
+                severity="medium",
+                passed=not has_secrets,
+                message="Lambda function has no obvious secrets in environment variables"
+                if not has_secrets
+                else f"Lambda function may have secrets in environment variables: {exposed_keys}",
+                resource=function["_name"],
+            )
+        )
+
+    return results

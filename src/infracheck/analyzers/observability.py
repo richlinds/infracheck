@@ -4,9 +4,12 @@ from infracheck.rules.observability import (
     check_alb_access_logging,
     check_cloudtrail_cloudwatch_integration,
     check_cloudwatch_alarms_exist,
+    check_ecs_container_insights,
     check_lambda_log_groups,
     check_lambda_xray_tracing,
     check_log_group_retention,
+    check_rds_enhanced_monitoring,
+    check_s3_server_access_logging,
     check_vpc_flow_logs,
 )
 
@@ -23,6 +26,9 @@ def run(resources: dict[str, list[dict]]) -> CategoryScore:
         *check_alb_access_logging(resources),
         *check_cloudtrail_cloudwatch_integration(resources),
         *check_vpc_flow_logs(resources),
+        *check_ecs_container_insights(resources),
+        *check_rds_enhanced_monitoring(resources),
+        *check_s3_server_access_logging(resources),
     ]
 
     return CategoryScore(

@@ -2,10 +2,13 @@ from infracheck.analyzers.scoring import score_results
 from infracheck.models import CategoryScore
 from infracheck.rules.fault_tolerance import (
     check_dynamodb_pitr,
+    check_ecs_min_healthy_percent,
     check_lambda_dlq,
     check_rds_backup_retention,
     check_rds_deletion_protection,
     check_rds_multi_az,
+    check_s3_versioning,
+    check_sns_topic_dlq,
     check_sqs_dlq,
 )
 
@@ -21,6 +24,9 @@ def run(resources: dict[str, list[dict]]) -> CategoryScore:
         *check_rds_deletion_protection(resources),
         *check_lambda_dlq(resources),
         *check_dynamodb_pitr(resources),
+        *check_s3_versioning(resources),
+        *check_ecs_min_healthy_percent(resources),
+        *check_sns_topic_dlq(resources),
     ]
 
     return CategoryScore(

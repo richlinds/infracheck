@@ -1,3 +1,5 @@
+import json
+
 from infracheck.models import RuleResult
 
 CATEGORY = "scalability"
@@ -197,5 +199,67 @@ def check_rds_read_replicas(resources: dict[str, list[dict]]) -> list[RuleResult
                     resource=instance["_name"],
                 )
             )
+
+    return results
+
+
+def check_ecs_service_autoscaling(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """ECS services should have Application Auto Scaling configured."""
+    results = []
+
+    has_ecs_autoscaling = any(
+        target.get("service_namespace") == "ecs"
+        for target in resources.get("aws_appautoscaling_target", [])
+    )
+
+    for service in resources.get("aws_ecs_service", []):
+        results.append(
+            RuleResult(
+                rule_id="ecs_service_autoscaling",
+                category=CATEGORY,
+                severity="medium",
+                passed=has_ecs_autoscaling,
+                message="ECS service has autoscaling configured"
+                if has_ecs_autoscaling
+                else "ECS service has no autoscaling configured - it cannot scale with demand",
+                resource=service["_name"],
+            )
+        )
+
+    return results
+
+
+def check_sqs_max_receive_count(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """SQS queues with a DLQ should set maxReceiveCount to at least 3."""
+    results = []
+    minimum_receive_count = 3
+
+    for queue in resources.get("aws_sqs_queue", []):
+        redrive_policy = queue.get("redrive_policy")
+        if not redrive_policy:
+            continue  # No DLQ configured; covered by sqs_dlq_configured
+
+        try:
+            policy = (
+                json.loads(redrive_policy) if isinstance(redrive_policy, str) else redrive_policy
+            )
+            max_receive_count = int(policy.get("maxReceiveCount", 0))
+        except (json.JSONDecodeError, ValueError, TypeError):
+            continue
+
+        is_sufficient = max_receive_count >= minimum_receive_count
+        results.append(
+            RuleResult(
+                rule_id="sqs_max_receive_count",
+                category=CATEGORY,
+                severity="medium",
+                passed=is_sufficient,
+                message=f"SQS queue maxReceiveCount is {max_receive_count}"
+                if is_sufficient
+                else f"SQS queue maxReceiveCount is {max_receive_count}"
+                f" - minimum {minimum_receive_count} recommended to avoid premature DLQ routing",
+                resource=queue["_name"],
+            )
+        )
 
     return results

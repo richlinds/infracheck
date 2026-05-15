@@ -152,3 +152,80 @@ def check_rds_deletion_protection(resources: dict[str, list[dict]]) -> list[Rule
         )
 
     return results
+
+
+def check_s3_versioning(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """S3 buckets should have versioning enabled to protect against accidental deletion."""
+    results = []
+
+    for versioning in resources.get("aws_s3_bucket_versioning", []):
+        versioning_config = versioning.get("versioning_configuration", {})
+        # versioning_configuration may be a list due to hcl2 block parsing
+        if isinstance(versioning_config, list):
+            versioning_config = versioning_config[0] if versioning_config else {}
+        is_enabled = versioning_config.get("status", "") == "Enabled"
+
+        results.append(
+            RuleResult(
+                rule_id="s3_versioning_enabled",
+                category=CATEGORY,
+                severity="medium",
+                passed=is_enabled,
+                message="S3 bucket has versioning enabled"
+                if is_enabled
+                else "S3 bucket does not have versioning enabled"
+                " - objects cannot be recovered after deletion or overwrite",
+                resource=versioning["_name"],
+            )
+        )
+
+    return results
+
+
+def check_ecs_min_healthy_percent(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """ECS services should keep at least 50% of tasks running during deployments."""
+    results = []
+    minimum_healthy_percent = 50
+
+    for service in resources.get("aws_ecs_service", []):
+        min_healthy = service.get("deployment_minimum_healthy_percent", 100)
+        is_sufficient = min_healthy >= minimum_healthy_percent
+
+        results.append(
+            RuleResult(
+                rule_id="ecs_min_healthy_percent",
+                category=CATEGORY,
+                severity="high",
+                passed=is_sufficient,
+                message=f"ECS service keeps {min_healthy}% of tasks running during deployments"
+                if is_sufficient
+                else f"ECS service deployment_minimum_healthy_percent is {min_healthy}%"
+                " - tasks may be fully stopped during deployments",
+                resource=service["_name"],
+            )
+        )
+
+    return results
+
+
+def check_sns_topic_dlq(resources: dict[str, list[dict]]) -> list[RuleResult]:
+    """SNS topics should have a redrive policy to capture undeliverable messages."""
+    results = []
+
+    for topic in resources.get("aws_sns_topic", []):
+        has_dlq = bool(topic.get("redrive_policy"))
+
+        results.append(
+            RuleResult(
+                rule_id="sns_topic_dlq_configured",
+                category=CATEGORY,
+                severity="medium",
+                passed=has_dlq,
+                message="SNS topic has a redrive policy configured"
+                if has_dlq
+                else "SNS topic has no redrive policy - undeliverable messages will be dropped",
+                resource=topic["_name"],
+            )
+        )
+
+    return results

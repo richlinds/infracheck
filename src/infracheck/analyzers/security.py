@@ -3,7 +3,10 @@ from infracheck.models import CategoryScore
 from infracheck.rules.security import (
     check_ec2_imdsv2_required,
     check_ec2_no_public_ip,
+    check_lambda_no_secrets_in_env,
+    check_rds_encryption,
     check_rds_not_publicly_accessible,
+    check_s3_encryption,
     check_s3_public_access,
     check_security_group_open_ingress,
 )
@@ -19,6 +22,9 @@ def run(resources: dict[str, list[dict]]) -> CategoryScore:
         *check_security_group_open_ingress(resources),
         *check_ec2_imdsv2_required(resources),
         *check_ec2_no_public_ip(resources),
+        *check_s3_encryption(resources),
+        *check_rds_encryption(resources),
+        *check_lambda_no_secrets_in_env(resources),
     ]
 
     return CategoryScore(
